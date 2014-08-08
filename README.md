@@ -1,2 +1,2 @@
-ijones_photo_cp
-===============
+ijones_photo_cp v0.1
+===================
