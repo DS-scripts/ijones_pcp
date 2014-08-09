@@ -14,48 +14,31 @@ import smtplib
 import getopt
 
 
+from optparse import OptionParser,OptionGroup
+
 # -=-[CONFIG]-=-
 photo_extensions    = [".jpg",".jpeg",".nef", ".mov", ".mp4"]
 
 # -=-[STDOUT Colors]-=-
 class bcolors:
-    gray             = '\033[1;30m'
-    red              = '\033[1;31m'
-    green            = '\033[1;32m'
-    yellow           = '\033[1;33m'
-    blue             = '\033[1;34m'
-    magenta          = '\033[1;35m'
-    cyan             = '\033[1;36m'
-    white            = '\033[1;37m'
-    highlightgreen   = '\033[1;42m'
-    highlightblue    = '\033[1;44m'
-    highlightmagenta = '\033[1;45m'
-    highlightcyan    = '\033[1;46m'
-    highlightred     = '\033[1;48m'
-    reset            = '\033[0m'
+        gray             = '\033[1;30m'
+        red              = '\033[1;31m'
+        green            = '\033[1;32m'
+        yellow           = '\033[1;33m'
+        blue             = '\033[1;34m'
+        magenta          = '\033[1;35m'
+        cyan             = '\033[1;36m'
+        white            = '\033[1;37m'
+        highlightgreen   = '\033[1;42m'
+        highlightblue    = '\033[1;44m'
+        highlightmagenta = '\033[1;45m'
+        highlightcyan    = '\033[1;46m'
+        highlightred     = '\033[1;48m'
+        reset            = '\033[0m'
 
-def usage ():
-    print bcolors.white+' usage: '+bcolors.red+'ijones_photo_cp.py'+bcolors.green+' [-h] [-p PHOTOSPATH] [-s SOURCEPATH] [-o OUTPUTPATH]'
-    print '                           [--logfile LOGFILE] [--force-serial SERIALNUM]'
-    print '                           [--add-photo-date] [--ignore-output]'
-    print ' '+bcolors.white
-    print ' optional arguments:'
-    print bcolors.green+'    -h --help                 '+bcolors.white+'how this help message and exit'
-    print bcolors.green+'    -p --photos-path PATH     '+bcolors.white+'path of the photos database for the last serial'
-    print bcolors.green+'                              '+bcolors.white+'number discovery'
-    print bcolors.green+'    -s --source-path PATH     '+bcolors.white+'path of the source of the photo to be copied'
-    print bcolors.green+'    -o --output-path PATH     '+bcolors.white+'path of th copied photos destination'
-    print bcolors.green+'    --logfile LOGFILE         '+bcolors.white+'logfile name'
-    print bcolors.green+'    --force-serial SERIALNUM  '+bcolors.white+'force initial serial photo number'
-    print bcolors.green+'    --add-photo-date          '+bcolors.white+'add the photo date in the output file name in'
-    print bcolors.green+'                              '+bcolors.white+'YYYYMMDD format (require libimage-exiftool-perl)'
-    print bcolors.green+'    --ignore-output           '+bcolors.white+'force to ignore the serial photo numbers might'
-    print bcolors.green+'                              '+bcolors.white+'be on the outputh path '
-    print bcolors.green+'                              '+bcolors.white+'WARNING: some file might be overwritten'
-    print bcolors.reset+' '
 
 # -=-[Get Opts]-=-
-def getargs(argv):
+def getargs():
     photopath   = ''
     sourcepath  = ''
     outputpath  = ''
@@ -64,38 +47,44 @@ def getargs(argv):
     photodate   = False
     igoutput    = False
 
-    try:
-        opts, args = getopt.getopt(argv,"hp:s:o:",["help", "photos-path=","source-path=", "output-path=",
-                                                   "logfile=", "force-serial=", "add-photo-date", "ignore-output"])
-        if not opts:
-            usage ()
-            sys.exit(2)
-    except getopt.GetoptError as err:
-        usage()
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt in ('-h', '--help'):
-            usage()
-            sys.exit(2)
-        elif opt in ("-p", "--photos-path"):
-            photopath = arg
-        elif opt in ("-s", "--source-path"):
-            sourcepath = arg
-        elif opt in ("-o", "--output-path"):
-            outputpath = arg
-        elif opt in ("--logfile"):
-            logfile = arg
-        elif opt in ("--force-serial"):
-            photonum = int(arg)
-        elif opt in ("--add-photo-date"):
-            photodate = True
-        elif opt in ("--ignore-output"):
-            igoutput = True
-        else:
-            usage()
-            sys.exit(2)
+    usage   = "usage: ijones_photo_cp.py [options] [-p PHOTO PATH] [-s SOURCE] [-o OUTPUT] "
+    version = "IJones Photo CP 0.2beta"
+    #parser.set_defaults(dryrun=True)
 
-    return photopath, sourcepath, outputpath, logfile, photonum, photodate, igoutput
+    parser = OptionParser(conflict_handler="resolve", usage = usage, version = version)
+    parser.add_option("-p", "--photo-path",
+                            dest="photopath",
+                                    help="path of the photos database for the last serial number discovery", metavar = "DIR")
+    parser.add_option("-s", "--source-path",
+                            dest="sourcepath", default='',
+                                    help="path of the source of the photo to be copied", metavar="DIR")
+    parser.add_option("-o", "--output-path",
+                            dest="outputpath", default='',
+                                    help="path of th copied photos destination", metavar="DIR")
+    parser.add_option("--force-serial",
+                            dest="photonum",
+                                    help="force initial serial photo number [default: 1]", metavar="NUM")
+    parser.add_option("--ignore-output",
+                            action="store_true", dest="igoutput", default=False,
+                                    help="force to ignore the serial photo numbers might be on the outputh path. WARNING: some file might be overwritten")
+
+    egroup = OptionGroup(parser,"EXIF Option",
+                               "EXIF handler options (require libimage-exiftool-perl)")
+    egroup.add_option("--add-photo-date",
+                            action="store_true", dest="photodate", default=False,
+                                    help="add the date of the photo in YYYYMMDD format, the final file name will be <serial>_<date>_<original>")
+
+    dgroup = OptionGroup(parser,"Debug Options")
+    dgroup.add_option("--logfile",
+                            dest="logfile",
+                                    help="enable debug and set the logfile name",  metavar="FILE")
+    parser.add_option_group(egroup)
+    parser.add_option_group(dgroup)
+
+    (options, args) = parser.parse_args()
+
+    return options.photopath, options.sourcepath, options.outputpath, options.logfile, options.photonum, options.photodate, options.igoutput
+
 
 # -=-[Find Last Serial Photo Num]-=-
 def findlastnum (path, opath, pext, igoutput):
@@ -213,12 +202,12 @@ def getphotodate(fname):
 
 # -=-[Driver]-=-
 if __name__ == "__main__":
-    photo_path, source_path, output_path, logfile, photonum, photodate, igoutput  = getargs(sys.argv[1:])
+    photo_path, source_path, output_path, logfile, photonum, photodate, igoutput  = getargs()
 
     if logfile != None:
         logging.basicConfig(filename=logfile,format='%(asctime)s %(message)s',level=logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(message)s')
+        logging.basicConfig(level=logging.INFO,format='%(asctime)s %(message)s')
 
     if not os.path.exists(photo_path):
         photonum = 0
@@ -233,7 +222,7 @@ if __name__ == "__main__":
         logging.debug("Output path not found %s" % output_path)
         sys.exit(2)
 
-    if photonum == 0:
+    if photonum == None:
         lastnumphoto, filename = findlastnum(photo_path, output_path, photo_extensions, igoutput)
         numphoto               = lastnumphoto + 1
     else:
