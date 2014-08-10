@@ -41,6 +41,7 @@ class bcolors:
 def getargs():
     photopath   = ''
     sourcepath  = ''
+    epilogue    = '    '
     outputpath  = ''
     logfile     = 'None'
     photonum    = 0
@@ -51,7 +52,7 @@ def getargs():
     version = "IJones Photo CP 0.2beta"
     #parser.set_defaults(dryrun=True)
 
-    parser = OptionParser(conflict_handler="resolve", usage = usage, version = version)
+    parser = OptionParser(conflict_handler="resolve", usage = usage, version = version, epilog = epilogue)
     parser.add_option("-p", "--photo-path",
                             dest="photopath",
                                     help="path of the photos database for the last serial number discovery", metavar = "DIR")
@@ -82,6 +83,10 @@ def getargs():
     parser.add_option_group(dgroup)
 
     (options, args) = parser.parse_args()
+
+    if len(sys.argv[1:]) == 0:
+        parser.print_help()
+        sys.exit(1)
 
     return options.photopath, options.sourcepath, options.outputpath, options.logfile, options.photonum, options.photodate, options.igoutput
 
@@ -213,13 +218,23 @@ if __name__ == "__main__":
         photonum = 0
         print bcolors.green+'>>> '+bcolors.red+'WARNING: '+bcolors.green+'Photo path not found!!!'
         logging.debug("Photo path not found %s" % photo_path)
-    elif not os.path.exists(source_path):
+
+    if not os.path.exists(source_path):
         print bcolors.green+'>>> '+bcolors.red+'CRITICAL: '+bcolors.green+'Source path not found!!!'
         logging.debug("Source path not found %s" % source_path)
         sys.exit(2)
-    elif not os.path.exists(output_path):
+    elif not os.path.isdir(source_path):
+        print bcolors.green+'>>> '+bcolors.red+'CRITICAL: '+bcolors.green+'Source path is not a folder!!!'
+        logging.debug("Source path is not a folder %s" % source_path)
+        sys.exit(2)
+
+    if not os.path.exists(output_path):
         print bcolors.green+'>>> '+bcolors.red+'CRITICAL: '+bcolors.green+'Output path not found!!!'
         logging.debug("Output path not found %s" % output_path)
+        sys.exit(2)
+    elif not os.path.isdir(output_path):
+        print bcolors.green+'>>> '+bcolors.red+'CRITICAL: '+bcolors.green+'Output path is not a folder!!!'
+        logging.debug("Output path is not a folder %s" % output_path)
         sys.exit(2)
 
     if photonum == None:
