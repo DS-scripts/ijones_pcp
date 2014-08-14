@@ -18,7 +18,7 @@ from optparse import OptionParser,OptionGroup
 
 # -=-[CONFIG]-=-
 photo_extensions    = [".jpg",".jpeg",".nef", ".mov", ".mp4"]
-exiftool='/usr/bin/exiftool/exiftool'
+exiftool='/usr/bin/exiftool'
 
 # -=-[STDOUT Colors]-=-
 class bcolors:
@@ -154,7 +154,10 @@ def copyphotos (spath, opath, pext, nphoto, pdate):
                 fname   = os.path.join(root,name)
                 if pdate:
                     photodate   = getphotodate(fname)
-                    sname       = str(nphoto) + '_' + photodate + '_' + name
+                    if photodate != '':
+                        sname       = str(nphoto) + '_' + photodate + '_' + name
+                    else:
+                        sname   = str(nphoto) + '_' + name
                 else:
                     sname   = str(nphoto) + '_' + name
 
@@ -203,8 +206,15 @@ def copy(src,dst,remove=False):
 
 def getphotodate(fname):
     cmd = exiftool + " -d '%Y%m%d' -DateTimeOriginal -S -s " + '"' + fname+'"'
-    photodate, err = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()
-    return photodate[:8]
+    pdate, err = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()
+    photodate = ''
+    try:
+        if isinstance(int(pdate[:8]), int):
+            photodate = pdate[:8]
+    except:
+        pass
+
+    return photodate
 
 # -=-[Driver]-=-
 if __name__ == "__main__":
