@@ -18,6 +18,7 @@ from optparse import OptionParser,OptionGroup
 
 # -=-[CONFIG]-=-
 photo_extensions    = [".jpg",".jpeg",".nef", ".mov", ".mp4"]
+exiftool='/usr/bin/exiftool/exiftool'
 
 # -=-[STDOUT Colors]-=-
 class bcolors:
@@ -201,7 +202,7 @@ def copy(src,dst,remove=False):
     return
 
 def getphotodate(fname):
-    cmd = "exiftool -d '%Y%m%d' -DateTimeOriginal -S -s " + fname
+    cmd = exiftool + " -d '%Y%m%d' -DateTimeOriginal -S -s " + '"' + fname+'"'
     photodate, err = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()
     return photodate[:8]
 
